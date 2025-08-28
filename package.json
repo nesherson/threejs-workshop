@@ -16,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "gsap": "3.12",
     "three": "^0.179.1",
     "vite": "^7.1.3"
   },
