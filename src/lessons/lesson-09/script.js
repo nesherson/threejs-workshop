@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
-import GUI from "lil-gui";
 
 window.addEventListener("resize", (e) => {
     size.width = window.innerWidth;
@@ -21,8 +20,6 @@ window.addEventListener("dblclick", (e) => {
     }
 });
 
-const gui = new GUI();
-
 const size = {
     width: window.innerWidth,
     height: window.innerHeight
@@ -33,22 +30,27 @@ const renderer = new THREE.WebGLRenderer({ canvas: canvas });
 const camera = new THREE.PerspectiveCamera(75, size.width / size.height);
 const orbitControls = new OrbitControls(camera, canvas);
 const scene = new THREE.Scene();
-const boxGeometry = new THREE.BoxGeometry(1, 1, 1, 2, 2, 2);
-const boxMaterial = new THREE.MeshBasicMaterial({ color: "red", wireframe: true });
-const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+const geometry = new THREE.BufferGeometry();
+const count = 25;
+const positions = new Float32Array(count * 3 * 3);
+
+for (let i = 0; i < count * 3 * 3; i++) {
+    positions[i] = (Math.random() - 0.5) * 5;
+}
+
+const positionsAttribute = new THREE.BufferAttribute(positions, 3);
+
+geometry.setAttribute("position", positionsAttribute);
+
+const geometryMaterial = new THREE.MeshBasicMaterial({ color: "red", wireframe: true });
+const geometryMesh = new THREE.Mesh(geometry, geometryMaterial);
 
 camera.position.z = 5;
 orbitControls.enableDamping = true;
 
 renderer.setSize(size.width, size.height);
-scene.add(boxMesh);
+scene.add(geometryMesh);
 scene.add(camera);
-
-gui.add(boxMesh.position, "y").name("Y").min(-3).max(3).step(0.01);
-gui.add(boxMesh.position, "x").name("X").min(-3).max(3).step(0.01);
-gui.add(boxMesh, "visible");
-gui.add(boxMaterial, "wireframe");
-gui.addColor(boxMaterial, "color")
 
 function tick() {
     orbitControls.update();
