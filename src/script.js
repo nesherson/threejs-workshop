@@ -1,96 +1,97 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/Addons.js";
-import GUI from "lil-gui";
-import gsap from "gsap";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-window.addEventListener("resize", (e) => {
-    size.width = window.innerWidth;
-    size.height = window.innerHeight;
-    camera.aspect = size.width / size.height;
-
-    camera.updateProjectionMatrix();
-    renderer.setSize(size.width, size.height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-});
-
-window.addEventListener("dblclick", (e) => {
-    if (!document.fullscreenElement) {
-        canvas.requestFullscreen();
-    }
-    else {
-        document.exitFullscreen();
-    }
-});
-
-window.addEventListener("keydown", (e) => {
-    if (e.key.toLowerCase() === "h") {
-        gui.show(gui._hidden);
-    }
-})
-
-const loadingManager = new THREE.LoadingManager();
-const textureLoader = new THREE.TextureLoader(loadingManager);
-const colorTexture = textureLoader.load("/textures/minecraft.png");
-// const alphaTexture = textureLoader.load("/textures/door/alpha.jpg");
-// const heightTexture = textureLoader.load("/textures/door/height.jpg");
-// const normalTexture = textureLoader.load("/textures/door/normal.jpg");
-// const ambientOcclusionTexture = textureLoader.load("/textures/door/ambientOcclusion.jpg");
-// const metalnessTexture = textureLoader.load("/textures/door/metalness.jpg");
-// const roughnessTexture = textureLoader.load("/textures/door/roughness.jpg");
-
-const gui = new GUI({
-    title: "Debug UI",
-    closeFolders: true
-});
-const debugObject = {};
-
-const size = {
-    width: window.innerWidth,
-    height: window.innerHeight
-}
-debugObject.spin = () => {
-    gsap.to(boxMesh.rotation, { duration: 1, y: boxMesh.rotation.y + Math.PI * 2});
-}
-debugObject.subdivision = 2;
-
+/**
+ * Base
+ */
+// Canvas
 const canvas = document.querySelector(".canvas");
-const renderer = new THREE.WebGLRenderer({ canvas: canvas });
-const camera = new THREE.PerspectiveCamera(75, size.width / size.height);
-const orbitControls = new OrbitControls(camera, canvas);
+
+// Scene
 const scene = new THREE.Scene();
-const boxGeometry = new THREE.BoxGeometry(1, 1, 1, 2, 2, 2);
-const boxMaterial = new THREE.MeshBasicMaterial({ map: colorTexture });
-const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
 
-camera.position.z = 5;
-orbitControls.enableDamping = true;
-colorTexture.magFilter = THREE.NearestFilter;
+/**
+ * Sizes
+ */
+const sizes = {
+  width: window.innerWidth,
+  height: window.innerHeight,
+};
 
-renderer.setSize(size.width, size.height);
-scene.add(boxMesh);
+window.addEventListener("resize", () => {
+  // Update sizes
+  sizes.width = window.innerWidth;
+  sizes.height = window.innerHeight;
+
+  // Update camera
+  camera.aspect = sizes.width / sizes.height;
+  camera.updateProjectionMatrix();
+
+  // Update renderer
+  renderer.setSize(sizes.width, sizes.height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
+
+/**
+ * Camera
+ */
+// Base camera
+const camera = new THREE.PerspectiveCamera(
+  75,
+  sizes.width / sizes.height,
+  0.1,
+  100
+);
+camera.position.x = 1;
+camera.position.y = 1;
+camera.position.z = 50;
+
 scene.add(camera);
 
-const boxTweaks = gui.addFolder("Box");
+// Controls
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
 
-boxTweaks.add(boxMesh.position, "y").name("Y").min(-3).max(3).step(0.01);
-boxTweaks.add(boxMesh.position, "x").name("X").min(-3).max(3).step(0.01);
-boxTweaks.add(boxMesh, "visible");
-boxTweaks.add(boxMaterial, "wireframe");
-boxTweaks.add(debugObject, "spin");
-boxTweaks.add(debugObject, "subdivision")
-   .min(1)
-   .max(10)
-   .step(1)
-   .onFinishChange(() => {
-    boxMesh.geometry.dispose();
-    boxMesh.geometry = 
-        new THREE.BoxGeometry(1, 1, 1, debugObject.subdivision, debugObject.subdivision, debugObject.subdivision);
-   });
+// Meshes
+const meshMaterial = new THREE.MeshBasicMaterial({ color: "red", wireframe: true });
 
-function tick() {
-    orbitControls.update();
-    renderer.render(scene, camera);
-    window.requestAnimationFrame(tick);
-}
+const sphereGeometry = new THREE.SphereGeometry(15, 32, 16);
+const sphere = new THREE.Mesh(sphereGeometry, meshMaterial);
+
+const planeGeometry = new THREE.PlaneGeometry(20, 20);
+const plane = new THREE.Mesh(planeGeometry, meshMaterial);
+
+/**
+ * Renderer
+ */
+const renderer = new THREE.WebGLRenderer({
+  canvas: canvas,
+});
+renderer.setSize(sizes.width, sizes.height);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+// Add meshes to scene
+scene.add(sphere);
+scene.add(plane);
+
+sphere.position.x = -30;
+
+/**
+ * Animate
+ */
+const clock = new THREE.Clock();
+
+const tick = () => {
+  const elapsedTime = clock.getElapsedTime();
+
+  // Update controls
+  controls.update();
+
+  // Render
+  renderer.render(scene, camera);
+
+  // Call tick again on the next frame
+  window.requestAnimationFrame(tick);
+};
 
 tick();
